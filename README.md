@@ -32,9 +32,6 @@ The skill covers:
 - Reference standards.
 - A Definition of Done.
 
-> [!NOTE]
-> The skill instructions are currently written in Spanish.
-
 ## Structure
 
 ```text

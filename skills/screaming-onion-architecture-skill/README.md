@@ -1,12 +1,13 @@
 # Screaming + Onion Architecture Skill
 
-Skill para agentes de desarrollo que integra Screaming Architecture, Onion Architecture, Clean Architecture y Vertical Slices sin tratarlas como sinónimos.
+A skill for development agents that integrates Screaming Architecture, Onion Architecture, Clean Architecture, and Vertical Slices without treating them as synonyms.
 
-## Uso
-1. Copia la carpeta `screaming-onion-architecture-skill` al directorio de skills de tu agente.
-2. Asegúrate de que el agente cargue `SKILL.md` como instrucciones de la skill.
-3. Actívala al diseñar, implementar, auditar o refactorizar arquitectura.
+## Usage
 
-El documento incluye reglas MUST/SHOULD/MAY, nomenclatura, matriz de dependencias, ejemplo .NET de autorización de permisos, aplicación gradual al sistema `itsmRH_GestionPermisos`, pruebas, estándares de referencia y Definition of Done.
+1. Copy the `screaming-onion-architecture-skill` folder into your agent's skills directory.
+2. Make sure the agent loads `SKILL.md` as the skill instructions.
+3. Enable it when designing, implementing, auditing, or refactoring architecture.
 
-Nota: el ejemplo de código es ilustrativo y marca explícitamente los puntos que requieren implementación antes de producción.
+The document includes MUST/SHOULD/MAY rules, naming, a dependency matrix, a .NET permission authorization example, gradual application to the `itsmRH_GestionPermisos` system, testing, reference standards, and a Definition of Done.
+
+Note: the code example is illustrative and explicitly marks the points that require implementation before production.

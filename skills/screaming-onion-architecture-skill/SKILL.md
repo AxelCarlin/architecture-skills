@@ -1,92 +1,94 @@
 ---
 name: screaming-onion-architecture
-description: Aplica una arquitectura orientada al negocio que combina Screaming Architecture para organizar por capacidades y casos de uso, Onion/Clean Architecture para controlar dependencias y Vertical Slices para mantener cada flujo cohesivo. Úsala al diseñar, implementar, revisar o refactorizar aplicaciones, especialmente .NET + Vue/TypeScript.
+description: Applies a business-oriented architecture that combines Screaming Architecture to organize by capabilities and use cases, Onion/Clean Architecture to control dependencies, and Vertical Slices to keep each flow cohesive. Use it when designing, implementing, reviewing, or refactoring applications, especially .NET + Vue/TypeScript.
 ---
 
 # Skill: Screaming + Onion + Clean Architecture
 
-## 1. Misión
+## 1. Mission
 
-Ayudar a diseñar y modificar software cuya estructura revele **qué hace el negocio**, cuyos módulos sean fáciles de localizar y evolucionar, y cuyas reglas de negocio no dependan de frameworks, HTTP ni persistencia.
+Help design and modify software whose structure reveals **what the business does**, whose modules are easy to locate and evolve, and whose business rules do not depend on frameworks, HTTP, or persistence.
 
-La integración propuesta tiene tres dimensiones complementarias:
+The proposed integration has three core dimensions plus an optional fourth:
 
-1. **Screaming Architecture — organización:** el repositorio comunica las capacidades del negocio (`Permissions`, `Users`, `Cutoffs`) en vez de comunicar únicamente tecnologías (`Controllers`, `Services`, `Repositories`).
-2. **Onion Architecture — dirección de dependencias:** el código externo depende de contratos y reglas internas; el dominio no conoce ASP.NET Core, EF Core, SQL Server, Vue ni detalles de infraestructura.
-3. **Clean Architecture — límites y políticas:** separa entidades/reglas, casos de uso, adaptadores y frameworks; mantiene las dependencias apuntando hacia las políticas internas.
-4. **Vertical Slice — unidad de cambio opcional:** dentro de una capacidad, organiza el código por flujo/caso de uso cuando eso mejora la cohesión (`AuthorizePermission`, `CancelPermission`). No es sinónimo de las otras tres arquitecturas ni obliga a duplicar toda la estructura en cada slice.
+1. **Screaming Architecture — organization:** the repository communicates business capabilities (`Permissions`, `Users`, `Cutoffs`) instead of communicating only technologies (`Controllers`, `Services`, `Repositories`).
+2. **Onion Architecture — dependency direction:** external code depends on contracts and internal rules; the domain does not know about ASP.NET Core, EF Core, SQL Server, Vue, or infrastructure details.
+3. **Clean Architecture — boundaries and policies:** separates entities/rules, use cases, adapters, and frameworks; keeps dependencies pointing toward internal policies.
+4. **Vertical Slice — optional unit of change:** within a capability, organize code by flow/use case when that improves cohesion (`AuthorizePermission`, `CancelPermission`). It is not a synonym for the other three architectures and does not require duplicating the entire structure in every slice.
 
-**Regla de síntesis:** organiza primero por negocio; dentro de cada capacidad, agrupa por caso de uso cuando sea útil; conserva los límites de dependencias de Onion/Clean.
+**Synthesis rule:** organize by business first; within each capability, group by use case when useful; preserve the dependency boundaries of Onion/Clean.
 
-## 2. Cuándo utilizar esta skill
+## 2. When to use this skill
 
-Actívala cuando el usuario solicite:
-- diseñar la arquitectura de una aplicación nueva;
-- crear módulos, features, endpoints o casos de uso;
-- evaluar una arquitectura existente;
-- refactorizar proyectos por capas hacia módulos de negocio;
-- definir nombres, carpetas, proyectos, contratos o reglas de dependencias;
-- revisar si una implementación respeta Screaming, Onion o Clean Architecture.
+Enable it when the user asks to:
 
-Antes de proponer cambios, determina si el trabajo es diseño nuevo, feature nueva, auditoría o migración. En sistemas existentes, inspecciona evidencia real antes de recomendar movimientos.
+- design the architecture of a new application;
+- create modules, features, endpoints, or use cases;
+- evaluate an existing architecture;
+- refactor layered projects into business modules;
+- define names, folders, projects, contracts, or dependency rules;
+- review whether an implementation respects Screaming, Onion, or Clean Architecture.
 
-## 3. Objetivos verificables
+Before proposing changes, determine whether the work is new design, a new feature, an audit, or a migration. In existing systems, inspect actual evidence before recommending moves.
 
-Una solución cumple esta skill cuando:
+## 3. Verifiable objectives
 
-- El árbol de carpetas revela las capacidades principales del producto.
-- Las reglas de negocio importantes pueden probarse sin arrancar HTTP, base de datos ni infraestructura.
-- Los casos de uso expresan una acción de negocio y coordinan el flujo sin convertirse en una segunda capa de controladores.
-- La infraestructura implementa contratos requeridos por la aplicación; la aplicación no importa la infraestructura.
-- Los controladores son adaptadores del protocolo HTTP, no el lugar habitual de las reglas de negocio.
-- Los DTOs de entrada/salida no se confunden automáticamente con entidades de dominio o entidades de persistencia.
-- Los módulos comparten código solo cuando existe una responsabilidad realmente compartida.
-- Las excepciones arquitectónicas se documentan y prueban.
-- Los cambios se verifican con pruebas y, cuando corresponda, análisis automático de dependencias.
+A solution complies with this skill when:
 
-No se exige que todo proyecto tenga muchos proyectos .NET, repositorios genéricos, CQRS, MediatR, Domain Events o una interfaz por clase. La complejidad debe responder a necesidades reales.
+- The folder tree reveals the product's main capabilities.
+- Important business rules can be tested without starting HTTP, a database, or infrastructure.
+- Use cases express a business action and coordinate the flow without becoming a second controller layer.
+- Infrastructure implements contracts required by the application; the application does not import infrastructure.
+- Controllers are HTTP protocol adapters, not the usual place for business rules.
+- Input/output DTOs are not automatically confused with domain entities or persistence entities.
+- Modules share code only when there is a truly shared responsibility.
+- Architectural exceptions are documented and tested.
+- Changes are verified with tests and, where appropriate, automated dependency analysis.
 
-## 4. Vocabulario y límites conceptuales
+Every project is not required to have many .NET projects, generic repositories, CQRS, MediatR, Domain Events, or one interface per class. Complexity must respond to real needs.
+
+## 4. Vocabulary and conceptual boundaries
 
 ### Screaming Architecture
 
-Pregunta: **¿Dónde encuentro el comportamiento del negocio?**
+Question: **Where do I find the business behavior?**
 
-Organiza el código para que un desarrollador identifique rápidamente permisos, usuarios, cortes, áreas, reportes, etc. Favorece cohesión y localidad de cambio.
+Organize code so a developer can quickly identify permissions, users, cutoffs, areas, reports, etc. This favors cohesion and change locality.
 
-No determina por sí sola qué proyecto puede referenciar a cuál. Tener una carpeta `Features/Permissions` no convierte automáticamente el sistema en una arquitectura modular.
+It does not by itself determine which project may reference which. Having a `Features/Permissions` folder does not automatically make the system a modular architecture.
 
 ### Onion Architecture
 
-Pregunta: **¿En qué dirección viajan las dependencias?**
+Question: **In which direction do dependencies travel?**
 
-El dominio ocupa el centro. La aplicación depende del dominio. La infraestructura implementa los contratos definidos hacia dentro. La API y el composition root conectan las piezas.
+The domain sits at the center. The application depends on the domain. Infrastructure implements the contracts defined inward. The API and the composition root connect the pieces.
 
-Las dependencias de compilación deben apuntar hacia políticas internas, aunque el flujo de ejecución pueda llamar desde un caso de uso a una implementación externa a través de una interfaz.
+Compilation dependencies must point toward internal policies, even though the execution flow may call from a use case to an external implementation through an interface.
 
 ### Clean Architecture
 
-Pregunta: **¿Qué políticas son internas y qué detalles deben poder sustituirse?**
+Question: **Which policies are internal, and which details must be replaceable?**
 
-Refuerza la separación entre:
-- **Entities / Domain:** reglas empresariales y conceptos del dominio.
-- **Use Cases / Application:** intención, coordinación y reglas específicas de cada operación.
-- **Interface Adapters:** traducción entre HTTP/JSON, modelos de aplicación y persistencia.
-- **Frameworks & Drivers / Infrastructure:** ASP.NET Core, EF Core, SQL Server, correo, archivos y servicios externos.
+It reinforces the separation between:
 
-Onion y Clean comparten la regla esencial de inversión de dependencias. No son etiquetas que deban implementarse con una plantilla rígida idéntica.
+- **Entities / Domain:** business rules and domain concepts.
+- **Use Cases / Application:** intent, coordination, and rules specific to each operation.
+- **Interface Adapters:** translation between HTTP/JSON, application models, and persistence.
+- **Frameworks & Drivers / Infrastructure:** ASP.NET Core, EF Core, SQL Server, email, files, and external services.
+
+Onion and Clean share the essential rule of dependency inversion. They are not labels that must be implemented with an identical rigid template.
 
 ### Vertical Slice Architecture
 
-Pregunta: **¿Cómo mantengo junto lo que cambia para completar un caso de uso?**
+Question: **How do I keep together what changes to complete a use case?**
 
-Una slice agrupa el código propio de un flujo, por ejemplo `Permissions/Authorize`. Puede contener request, handler/use case, validator y response. La persistencia y el dominio compartidos no se duplican solo para que cada slice parezca independiente.
+A slice groups the code for a flow, for example `Permissions/Authorize`. It can contain a request, handler/use case, validator, and response. Shared persistence and domain code are not duplicated just to make each slice look independent.
 
-**No afirmar:** “Screaming + Onion automáticamente es Vertical Slice”. La combinación permite slices, pero son decisiones relacionadas y distintas.
+**Do not claim:** "Screaming + Onion automatically means Vertical Slice." The combination allows slices, but they are related and distinct decisions.
 
-## 5. Arquitectura objetivo
+## 5. Target architecture
 
-### 5.1 Opción recomendada para .NET con límites explícitos
+### 5.1 Recommended option for .NET with explicit boundaries
 
 ```text
 Backend/
@@ -155,212 +157,218 @@ Backend/
     GestionPermisos.Api.Tests/
 ```
 
-La estructura exacta debe adaptarse al tamaño del sistema. Si la solución no necesita cuatro ensamblados, puede conservar menos proyectos y aplicar los mismos límites mediante namespaces, referencias controladas y pruebas arquitectónicas. Separar proyectos es útil cuando convierte las reglas en restricciones de compilación; no es un fin estético.
+The exact structure must adapt to the size of the system. If the solution does not need four assemblies, it can keep fewer projects and apply the same boundaries through namespaces, controlled references, and architecture tests. Separating projects is useful when it turns rules into compilation constraints; it is not an aesthetic goal.
 
-### 5.2 Mapa de responsabilidades
+### 5.2 Responsibility map
 
-| Parte | Responsabilidad | No debe hacer |
+| Part | Responsibility | Must not do |
 |---|---|---|
-| `Api` | HTTP, autenticación del transporte, autorización de endpoints, model binding, códigos HTTP, composición y DI | Contener reglas centrales del permiso o ejecutar consultas de negocio complejas directamente |
-| `Application` | Casos de uso, coordinación, validación de operación, contratos necesarios y resultados | Depender de `Infrastructure`, `DbContext`, `IActionResult` o tipos HTTP |
-| `Domain` | Entidades, objetos de valor, invariantes y reglas del negocio | Importar EF Core, ASP.NET Core, JSON, archivos o servicios externos |
-| `Infrastructure` | Implementar persistencia, correo, archivos, reloj real y otros adaptadores externos | Decidir políticas de negocio que deberían estar en Domain/Application |
-| `Frontend/features` | Interfaz y flujos de usuario agrupados por capacidad | Convertirse en fuente de autoridad para permisos de seguridad |
-| `Shared` / `Common` | Tipos realmente transversales, estables y pequeños | Ser un vertedero de helpers, DTOs o lógica que pertenece a una feature |
+| `Api` | HTTP, transport authentication, endpoint authorization, model binding, HTTP status codes, composition, and DI | Contain central permission rules or execute complex business queries directly |
+| `Application` | Use cases, coordination, operation validation, required contracts, and results | Depend on `Infrastructure`, `DbContext`, `IActionResult`, or HTTP types |
+| `Domain` | Entities, value objects, invariants, and business rules | Import EF Core, ASP.NET Core, JSON, files, or external services |
+| `Infrastructure` | Implement persistence, email, files, the real clock, and other external adapters | Decide business policies that should belong in Domain/Application |
+| `Frontend/features` | User interface and flows grouped by capability | Become the source of authority for security permissions |
+| `Shared` / `Common` | Truly cross-cutting, stable, and small types | Become a dumping ground for helpers, DTOs, or logic that belongs to a feature |
 
-### 5.3 Dirección permitida de dependencias
+### 5.3 Allowed dependency direction
 
 ```text
 API ───────────────► Application ───────────────► Domain
  │                         ▲
- │                         │ implementa contratos
+ │                         │ implements contracts
  └────► Infrastructure ────┴────────────────────► Domain
 ```
 
-Interpretación:
-- `Application` puede declarar `IPermissionRepository`.
-- `Infrastructure` implementa `IPermissionRepository` con EF Core.
-- `Application` no referencia el proyecto `Infrastructure`.
-- `Api` o el composition root registra `IPermissionRepository -> PermissionRepository`.
-- `Domain` no conoce a ninguno de los proyectos exteriores.
+Interpretation:
 
-Dependencias de proyecto sugeridas:
+- `Application` can declare `IPermissionRepository`.
+- `Infrastructure` implements `IPermissionRepository` with EF Core.
+- `Application` does not reference the `Infrastructure` project.
+- `Api` or the composition root registers `IPermissionRepository -> PermissionRepository`.
+- `Domain` knows none of the outer projects.
 
-| Proyecto | Puede referenciar |
+Suggested project dependencies:
+
+| Project | May reference |
 |---|---|
-| `Domain` | BCL y paquetes mínimos realmente neutrales |
+| `Domain` | BCL and minimal packages that are truly neutral |
 | `Application` | `Domain` |
-| `Infrastructure` | `Application`, `Domain` y librerías técnicas necesarias |
-| `Api` | `Application`, `Infrastructure` para composición y, si hace falta, `Domain` para mapeo explícito |
-| Tests de Domain | `Domain` |
-| Tests de Application | `Application`, `Domain` y dobles de prueba |
-| Tests de Infrastructure | `Infrastructure` y proveedores de prueba |
-| Tests de API | `Api` y herramientas de integración |
+| `Infrastructure` | `Application`, `Domain`, and necessary technical libraries |
+| `Api` | `Application`, `Infrastructure` for composition and, if needed, `Domain` for explicit mapping |
+| Domain tests | `Domain` |
+| Application tests | `Application`, `Domain`, and test doubles |
+| Infrastructure tests | `Infrastructure` and test providers |
+| API tests | `Api` and integration tooling |
 
-Evitar ciclos. La tabla es una política inicial, no una obligación de que todo el mundo necesite los mismos ensamblados.
+Avoid cycles. The table is an initial policy, not an obligation for everyone to need the same assemblies.
 
-## 6. Reglas normativas de la skill
+## 6. Normative rules of the skill
 
-Las etiquetas significan:
-- **MUST / Obligatorio:** regla por defecto; incumplir requiere una excepción explícita.
-- **SHOULD / Recomendado:** aplicar salvo que exista una razón concreta.
-- **MAY / Opcional:** utilizar si añade valor.
+The labels mean:
 
-### R1 — Organizar por capacidad de negocio (MUST)
+- **MUST / Mandatory:** default rule; violating it requires an explicit exception.
+- **SHOULD / Recommended:** apply unless there is a concrete reason not to.
+- **MAY / Optional:** use it if it adds value.
 
-Preferir `Features/Permissions`, `Features/Users`, `Features/Cutoffs` sobre carpetas globales que dispersan una sola capacidad entre `Controllers/`, `Services/`, `Repositories/` y `DTOs/`.
+### R1 — Organize by business capability (MUST)
 
-Las carpetas técnicas globales siguen siendo válidas para verdaderos límites técnicos: `Middleware`, `Persistence`, `Authentication`, `Observability`.
+Prefer `Features/Permissions`, `Features/Users`, `Features/Cutoffs` over global folders that scatter a single capability across `Controllers/`, `Services/`, `Repositories/`, and `DTOs/`.
 
-### R2 — Dirección de dependencias (MUST)
+Global technical folders remain valid for true technical boundaries: `Middleware`, `Persistence`, `Authentication`, `Observability`.
 
-Las reglas de dominio no deben depender de detalles externos. La aplicación declara las abstracciones que necesita; infraestructura las implementa.
+### R2 — Dependency direction (MUST)
 
-No introducir referencias de `Domain` o `Application` a `Infrastructure` para resolver una comodidad de implementación.
+Domain rules must not depend on external details. The application declares the abstractions it needs; infrastructure implements them.
 
-### R3 — Dominio puro por defecto (MUST)
+Do not introduce references from `Domain` or `Application` to `Infrastructure` to satisfy implementation convenience.
 
-Las entidades de dominio no deben depender de:
+### R3 — Pure domain by default (MUST)
+
+Domain entities must not depend on:
+
 - `Microsoft.AspNetCore.*`
 - `Microsoft.EntityFrameworkCore.*`
-- DTOs de HTTP, `IActionResult`, `HttpContext`
-- clientes SQL, correo, sistema de archivos o UI.
+- HTTP DTOs, `IActionResult`, `HttpContext`
+- SQL clients, email, the file system, or the UI.
 
-Las anotaciones de persistencia y el mapeo de EF deben vivir en configuraciones de Infrastructure cuando sea práctico. No se prohíbe cada paquete externo de forma dogmática; cualquier dependencia del dominio debe justificarse por estabilidad y valor.
+Persistence annotations and EF mapping should live in Infrastructure configurations when practical. No external package is dogmatically prohibited; any domain dependency must be justified by stability and value.
 
-### R4 — Casos de uso explícitos (SHOULD)
+### R4 — Explicit use cases (SHOULD)
 
-Si una operación coordina reglas, autorización de negocio, varias escrituras, transacciones, correo o archivos, representarla como caso de uso en Application.
+If an operation coordinates rules, business authorization, multiple writes, transactions, email, or files, represent it as a use case in Application.
 
-Ejemplos: `AuthorizePermission`, `CancelPermission`, `ImportCutoffs`, `RegisterUser`.
+Examples: `AuthorizePermission`, `CancelPermission`, `ImportCutoffs`, `RegisterUser`.
 
-Para un CRUD trivial de lectura, no crear una cadena de cinco clases que solo reenvían parámetros. Una consulta sencilla puede tener un query handler ligero o un adaptador de lectura, pero no debe saltarse los límites de dependencias.
+For trivial read CRUD, do not create a five-class chain that only forwards parameters. A simple query can have a lightweight query handler or a read adapter, but it must not bypass dependency boundaries.
 
-### R5 — Sin servicios pasamanos (MUST)
+### R5 — No pass-through services (MUST)
 
-No crear `IPermissionService` + `PermissionService` si la clase únicamente llama a otra clase y no agrega política, coordinación, validación, transformación ni un límite útil.
+Do not create `IPermissionService` + `PermissionService` if the class only calls another class and adds no policy, coordination, validation, transformation, or useful boundary.
 
-La ausencia de un servicio pasamanos **no** autoriza a colocar toda la lógica en el controller. El endpoint debe seguir siendo un adaptador fino; la lógica significativa va al caso de uso o dominio.
+The absence of a pass-through service **does not** authorize putting all logic in the controller. The endpoint must remain a thin adapter; meaningful logic goes into the use case or domain.
 
-### R6 — Contratos donde se invierte una dependencia (SHOULD)
+### R6 — Contracts where a dependency is inverted (SHOULD)
 
-Crear interfaces para límites que necesitan ser sustituidos, probados o implementados por un anillo exterior: persistencia, reloj, envío de correo, almacenamiento de archivos o proveedor externo.
+Create interfaces for boundaries that need to be substituted, tested, or implemented by an outer ring: persistence, clock, email delivery, file storage, or an external provider.
 
-No crear una interfaz para cada clase por costumbre. El contrato debe pertenecer a la capa interna que necesita el servicio, no a la capa concreta que lo implementa.
+Do not create an interface for every class out of habit. The contract must belong to the inner layer that needs the service, not to the concrete layer that implements it.
 
-### R7 — DTOs con propósito claro (MUST)
+### R7 — DTOs with a clear purpose (MUST)
 
-Distinguir por intención, no solo por sufijo:
-- `AuthorizePermissionRequest`: entrada HTTP.
-- `AuthorizePermissionCommand`: intención de aplicación.
-- `AuthorizePermissionResult`: resultado del caso de uso.
-- `PermissionResponse`: salida HTTP.
-- `Permission`: entidad de dominio.
-- `PermissionEntity` solo si realmente existe un modelo de persistencia separado y la convención lo necesita.
+Distinguish by intent, not only by suffix:
 
-Se puede reutilizar un DTO entre límites cuando es estable y no filtra detalles de transporte o persistencia. No duplicar tipos idénticos sin una razón.
+- `AuthorizePermissionRequest`: HTTP input.
+- `AuthorizePermissionCommand`: application intent.
+- `AuthorizePermissionResult`: use-case result.
+- `PermissionResponse`: HTTP output.
+- `Permission`: domain entity.
+- `PermissionEntity` only if a separate persistence model truly exists and the convention needs it.
 
-### R8 — Validación en la capa correcta (MUST)
+A DTO may be reused across boundaries when it is stable and does not leak transport or persistence details. Do not duplicate identical types without a reason.
 
-- Formato y estructura HTTP: API/model binding.
-- Reglas de la operación y permisos sobre el recurso: Application.
-- Invariantes que siempre deben cumplirse: Domain.
-- Restricciones de integridad: también en la base de datos cuando corresponda.
+### R8 — Validation in the correct layer (MUST)
 
-Una validación frontend mejora la experiencia, pero nunca reemplaza la validación de servidor.
+- HTTP format and structure: API/model binding.
+- Operation rules and permissions on the resource: Application.
+- Invariants that must always hold: Domain.
+- Integrity constraints: also in the database when appropriate.
 
-### R9 — Seguridad independiente de la organización (MUST)
+Frontend validation improves the experience, but it never replaces server-side validation.
 
-- Cada endpoint debe tener autenticación y autorización explícitas.
-- Comprobar roles/policies y acceso al recurso; estar autenticado no significa estar autorizado.
-- No confiar en que la UI o una API key por sí sola protejan una operación.
-- No registrar secretos, tokens, contraseñas, datos personales innecesarios ni cadenas de conexión.
-- Usar algoritmos de hashing de contraseñas apropiados y sal; no SHA-256 simple para contraseñas.
-- Verificar CORS, antiforgery cuando aplique, gestión de secretos y manejo seguro de errores.
-- Los cambios arquitectónicos no se consideran una corrección de seguridad hasta que existan pruebas que la demuestren.
+### R9 — Security independent of organization (MUST)
 
-### R10 — Transacciones e integridad (MUST cuando aplique)
+- Every endpoint must have explicit authentication and authorization.
+- Check roles/policies and access to the resource; being authenticated does not mean being authorized.
+- Do not trust the UI or an API key alone to protect an operation.
+- Do not log secrets, tokens, passwords, unnecessary personal data, or connection strings.
+- Use appropriate password hashing algorithms and salt; do not use plain SHA-256 for passwords.
+- Verify CORS, antiforgery when applicable, secret management, and safe error handling.
+- Architectural changes are not considered a security fix until tests demonstrate it.
 
-Un caso de uso que requiere varias escrituras atómicas debe definir el límite transaccional. La implementación de transacción pertenece a Infrastructure o a un contrato de Application implementado por Infrastructure. No asumir que varias llamadas a repositorio son atómicas.
+### R10 — Transactions and integrity (MUST when applicable)
 
-### R11 — Errores y resultados explícitos (SHOULD)
+A use case that requires multiple atomic writes must define the transaction boundary. The transaction implementation belongs to Infrastructure or to an Application contract implemented by Infrastructure. Do not assume that multiple repository calls are atomic.
 
-Los casos de uso deben devolver resultados tipados o lanzar excepciones de aplicación/domain bien definidas según la convención del proyecto. La API traduce esos resultados a HTTP (`200`, `201`, `400`, `403`, `404`, `409`, etc.) y `ProblemDetails` cuando sea apropiado. No filtrar stack traces al cliente.
+### R11 — Explicit errors and results (SHOULD)
 
-### R12 — Nombres precisos y consistentes (MUST)
+Use cases should return typed results or throw well-defined application/domain exceptions according to the project convention. The API translates those results to HTTP (`200`, `201`, `400`, `403`, `404`, `409`, etc.) and `ProblemDetails` when appropriate. Do not leak stack traces to the client.
 
-Usar términos del negocio, verbos para acciones y nombres que expliquen intención. Evitar nombres vagos (`Manager`, `Helper`, `CommonService`, `ProcessData`, `DoStuff`) salvo que el dominio justifique el término.
+### R12 — Precise and consistent names (MUST)
 
-### R13 — Simetría frontend/backend sin acoplamiento rígido (SHOULD)
+Use business terms, verbs for actions, and names that explain intent. Avoid vague names (`Manager`, `Helper`, `CommonService`, `ProcessData`, `DoStuff`) unless the domain justifies the term.
 
-Mantener correspondencia conceptual, no necesariamente una estructura 1:1. Por ejemplo, `Frontend/src/features/permissions` consume endpoints de permisos, pero puede dividir componentes por flujo UX. No hacer que el frontend importe tipos internos de Domain o de EF.
+### R13 — Frontend/backend symmetry without rigid coupling (SHOULD)
 
-### R14 — Shared bajo control (MUST)
+Maintain conceptual correspondence, not necessarily a 1:1 structure. For example, `Frontend/src/features/permissions` consumes permission endpoints but may split components by UX flow. Do not make the frontend import internal Domain or EF types.
 
-Mover código a `Shared` solo si lo usan varios módulos y su semántica es realmente común. No mover una función a `Shared` solo porque se usa dos veces. No crear `Common` como destino por defecto de todo lo que no encaja.
+### R14 — Shared under control (MUST)
 
-### R15 — Excepciones explícitas (MUST)
+Move code to `Shared` only if it is used by multiple modules and its semantics are truly common. Do not move a function to `Shared` just because it is used twice. Do not create `Common` as the default destination for everything that does not fit.
 
-Una desviación debe documentar: motivo, alcance, riesgo, alternativa descartada y condición para reevaluarla. Las excepciones no se convierten en patrón por copiar y pegar.
+### R15 — Explicit exceptions (MUST)
 
-### R16 — Verificación antes de afirmar (MUST)
+A deviation must document: reason, scope, risk, discarded alternative, and the condition for re-evaluating it. Exceptions do not become a pattern through copy and paste.
 
-Separar en informes:
-- **Observado:** evidencia directa del código/configuración.
-- **Inferido:** conclusión probable, no comprobada.
-- **No verificado:** falta evidencia o ejecución.
-No afirmar que las pruebas pasan si no se ejecutaron. No afirmar que un sistema cumple Clean/Onion solo porque tiene proyectos con esos nombres.
+### R16 — Verify before claiming (MUST)
 
-## 7. Nomenclatura recomendada para C# y TypeScript
+Separate the following in reports:
 
-La nomenclatura debe respetar las convenciones ya establecidas en el repositorio si son coherentes. En un proyecto nuevo:
+- **Observed:** direct evidence from code or configuration.
+- **Inferred:** probable conclusion, not verified.
+- **Unverified:** missing evidence or execution.
 
-| Elemento | Convención | Ejemplo |
+Do not claim that tests pass if they were not run. Do not claim that a system complies with Clean/Onion only because it has projects with those names.
+
+## 7. Recommended naming for C# and TypeScript
+
+Naming should respect the conventions already established in the repository when they are coherent. In a new project:
+
+| Element | Convention | Example |
 |---|---|---|
-| Proyecto/namespace | `PascalCase` | `GestionPermisos.Application` |
-| Clase, record, interfaz, enum | `PascalCase` | `AuthorizePermissionHandler`, `IPermissionRepository` |
-| Método/propiedad pública | `PascalCase` | `AuthorizeAsync`, `PermissionStatus` |
-| Parámetro/variable local | `camelCase` | `permissionId`, `currentUser` |
-| Campo privado | `_camelCase` | `_permissionRepository` |
-| Constantes | `PascalCase` en C# | `MaximumEvidenceSize` |
-| Caso de uso | Verbo + objeto | `AuthorizePermission`, `CancelPermission` |
-| Puerto/interfaz | `I` + capacidad | `IPermissionRepository`, `IClock` |
-| Implementación | Nombre concreto | `EfPermissionRepository`, `SystemClock` |
-| Entrada HTTP | Acción + `Request` | `AuthorizePermissionRequest` |
-| Comando | Acción + `Command` | `AuthorizePermissionCommand` |
-| Query | Acción/consulta + `Query` | `GetPermissionByIdQuery` |
-| Resultado | Acción + `Result` | `AuthorizePermissionResult` |
-| Respuesta HTTP | Objeto + `Response` | `PermissionResponse` |
-| Validador | Tipo + `Validator` | `AuthorizePermissionValidator` |
-| Prueba | Tipo/acción + comportamiento | `AuthorizePermissionHandlerTests` |
+| Project/namespace | `PascalCase` | `GestionPermisos.Application` |
+| Class, record, interface, enum | `PascalCase` | `AuthorizePermissionHandler`, `IPermissionRepository` |
+| Public method/property | `PascalCase` | `AuthorizeAsync`, `PermissionStatus` |
+| Parameter/local variable | `camelCase` | `permissionId`, `currentUser` |
+| Private field | `_camelCase` | `_permissionRepository` |
+| Constants | `PascalCase` in C# | `MaximumEvidenceSize` |
+| Use case | Verb + object | `AuthorizePermission`, `CancelPermission` |
+| Port/interface | `I` + capability | `IPermissionRepository`, `IClock` |
+| Implementation | Concrete name | `EfPermissionRepository`, `SystemClock` |
+| HTTP input | Action + `Request` | `AuthorizePermissionRequest` |
+| Command | Action + `Command` | `AuthorizePermissionCommand` |
+| Query | Action/query + `Query` | `GetPermissionByIdQuery` |
+| Result | Action + `Result` | `AuthorizePermissionResult` |
+| HTTP response | Object + `Response` | `PermissionResponse` |
+| Validator | Type + `Validator` | `AuthorizePermissionValidator` |
+| Test | Type/action + behavior | `AuthorizePermissionHandlerTests` |
 | Vue component | `PascalCase.vue` | `PermissionDetailsView.vue` |
 | TypeScript functions/variables | `camelCase` | `authorizePermission()` |
 | TypeScript types/interfaces | `PascalCase` | `PermissionResponse` |
 
-No introducir sufijos `Impl`, `Manager` o `Helper` automáticamente. `Repository` se reserva para una abstracción/implementación de persistencia con una responsabilidad definida; no todo acceso a datos necesita un repositorio genérico.
+Do not automatically introduce `Impl`, `Manager`, or `Helper` suffixes. `Repository` is reserved for a persistence abstraction/implementation with a defined responsibility; not every data access needs a generic repository.
 
-## 8. Ejemplo completo: autorizar un permiso laboral
+## 8. Complete example: authorize a work permission
 
-### 8.1 Flujo
+### 8.1 Flow
 
 ```text
 HTTP POST /api/permissions/{id}/authorize
     ↓
-PermissionsController (API: valida transporte y traduce HTTP)
+PermissionsController (API: validates transport and translates HTTP)
     ↓
-AuthorizePermissionHandler (Application: coordina el caso de uso)
-    ├── IPermissionRepository (contrato interno)
-    ├── política/regla de dominio (Permission.Authorize)
-    └── IUnitOfWork (si la operación necesita una transacción)
-             ↑ implementaciones
+AuthorizePermissionHandler (Application: coordinates the use case)
+    ├── IPermissionRepository (internal contract)
+    ├── domain policy/rule (Permission.Authorize)
+    └── IUnitOfWork (if the operation needs a transaction)
+             ↑ implementations
     EfPermissionRepository + EfUnitOfWork (Infrastructure)
              ↓
         SQL Server / EF Core
 ```
 
-La API no debe llamar directamente a EF Core para decidir si un permiso se puede autorizar. Application coordina el flujo y Domain protege las invariantes.
+The API must not call EF Core directly to decide whether a permission can be authorized. Application coordinates the flow, and Domain protects the invariants.
 
-### 8.2 Dominio
+### 8.2 Domain
 
 ```csharp
 namespace GestionPermisos.Domain.Permissions;
@@ -378,7 +386,7 @@ public sealed class Permission
     public Guid Id { get; private set; }
     public PermissionStatus Status { get; private set; }
 
-    private Permission() { } // Para mapeo cuando la configuración lo requiera.
+    private Permission() { } // For mapping when the configuration requires it.
 
     public Permission(Guid id)
     {
@@ -390,16 +398,16 @@ public sealed class Permission
     {
         if (Status != PermissionStatus.Pending)
             throw new InvalidPermissionTransitionException(
-                "Solo se pueden autorizar permisos pendientes.");
+                "Only pending permissions can be authorized.");
 
         Status = PermissionStatus.Authorized;
     }
 }
 ```
 
-`InvalidPermissionTransitionException` sería una excepción de dominio definida en el proyecto Domain. Este ejemplo es ilustrativo: las reglas reales deben confirmarse con el negocio; no asumir que todos los permisos comparten este flujo de estados.
+`InvalidPermissionTransitionException` would be a domain exception defined in the Domain project. This example is illustrative: the real rules must be confirmed with the business; do not assume that all permissions share this state flow.
 
-### 8.3 Contrato en Application
+### 8.3 Contract in Application
 
 ```csharp
 using GestionPermisos.Domain.Permissions;
@@ -416,9 +424,9 @@ public interface IPermissionRepository
 }
 ```
 
-El contrato está en Application porque es el caso de uso quien necesita persistir permisos. Infrastructure lo implementará.
+The contract lives in Application because the use case needs to persist permissions. Infrastructure will implement it.
 
-### 8.4 Caso de uso en Application
+### 8.4 Use case in Application
 
 ```csharp
 namespace GestionPermisos.Application.Features.Permissions.Authorize;
@@ -454,9 +462,9 @@ public sealed class AuthorizePermissionHandler
         if (permission is null)
             throw new PermissionNotFoundException(command.PermissionId);
 
-        // La autorización de identidad/recurso debe comprobarse aquí
-        // o mediante una política de aplicación explícita.
-        // No basta con que el usuario esté autenticado.
+        // Identity/resource authorization must be checked here
+        // or through an explicit application policy.
+        // Being authenticated is not enough.
 
         permission.Authorize();
 
@@ -470,9 +478,9 @@ public sealed class AuthorizePermissionHandler
 }
 ```
 
-El ejemplo omite deliberadamente la implementación de `IUnitOfWork`, las excepciones auxiliares y la comprobación completa de autorización para mantener visible el límite arquitectónico. No debe copiarse a producción sin implementar esos requisitos. En particular, `AuthorizedByUserId` no prueba por sí mismo que ese usuario tenga permiso para autorizar.
+The example deliberately omits the implementation of `IUnitOfWork`, the auxiliary exceptions, and the complete authorization check so that the architectural boundary remains visible. It must not be copied to production without implementing those requirements. In particular, `AuthorizedByUserId` does not by itself prove that the user is allowed to authorize.
 
-### 8.5 Adaptador de infraestructura
+### 8.5 Infrastructure adapter
 
 ```csharp
 namespace GestionPermisos.Infrastructure.Persistence.Repositories;
@@ -494,9 +502,9 @@ internal sealed class EfPermissionRepository : IPermissionRepository
 }
 ```
 
-El mapeo entre dominio y persistencia depende de cómo se haya diseñado el modelo. Si las entidades de dominio se persisten directamente con EF Core, la configuración EF se mantiene fuera de Domain. Si se usan modelos de persistencia separados, Infrastructure realiza el mapeo explícito.
+The mapping between domain and persistence depends on how the model was designed. If domain entities are persisted directly with EF Core, the EF configuration stays outside Domain. If separate persistence models are used, Infrastructure performs the explicit mapping.
 
-### 8.6 Adaptador HTTP
+### 8.6 HTTP adapter
 
 ```csharp
 [ApiController]
@@ -514,7 +522,7 @@ public sealed class PermissionsController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var userId = GetAuthenticatedUserId(); // Adaptador de identidad, validado.
+        var userId = GetAuthenticatedUserId(); // Identity adapter, validated.
         var result = await _authorize.HandleAsync(
             new AuthorizePermissionCommand(id, userId),
             cancellationToken);
@@ -524,158 +532,159 @@ public sealed class PermissionsController : ControllerBase
 }
 ```
 
-El método `GetAuthenticatedUserId`, la política de autorización y el mapeo de excepciones son puntos ilustrativos que deben implementarse de forma explícita. La política HTTP no reemplaza la autorización del recurso dentro del caso de uso cuando el acceso depende del estado o propietario del permiso.
+The `GetAuthenticatedUserId` method, the authorization policy, and the exception mapping are illustrative points that must be implemented explicitly. The HTTP policy does not replace resource authorization inside the use case when access depends on the state or owner of the permission.
 
-## 9. Aplicación al sistema `itsmRH_GestionPermisos`
+## 9. Applying to the `itsmRH_GestionPermisos` system
 
-### 9.1 Punto de partida observado en el informe
+### 9.1 Starting point observed in the report
 
-El informe de auditoría describe un monolito web .NET con SPA Vue, proyectos `Core`, `Data`, `Services`, `Crosscutting`, API y tests. Observa que:
-- `Core` mezcla entidades, DTOs, ViewModels, enums e interfaces.
-- `Services` depende de `Data` y `Crosscutting`.
-- `Crosscutting` también depende de `Data`.
-- Los controladores realizan algunas tareas de orquestación y acceso a datos.
-- Hay features en presentación, pero no límites modulares completos.
-- La suite de pruebas descrita no cubre todos los controladores/filtros/auth/E2E.
-- La auditoría reporta riesgos de seguridad que deben tratarse como trabajo separado, no como consecuencia automática de cambiar carpetas.
+The audit report describes a .NET web monolith with a Vue SPA, `Core`, `Data`, `Services`, `Crosscutting`, API, and test projects. It observes that:
 
-Estos puntos son la línea base del informe recibido, no una certificación independiente del estado actual del repositorio. Antes de cambiarlo, volver a inspeccionar rama, commit y código vigente.
+- `Core` mixes entities, DTOs, ViewModels, enums, and interfaces.
+- `Services` depends on `Data` and `Crosscutting`.
+- `Crosscutting` also depends on `Data`.
+- Controllers perform some orchestration and data access tasks.
+- There are features in the presentation layer, but not complete modular boundaries.
+- The described test suite does not cover all controllers, filters, auth, or E2E flows.
+- The audit reports security risks that must be treated as separate work, not as an automatic consequence of changing folders.
 
-### 9.2 Traducción gradual, no reescritura masiva
+These points are the baseline of the received report, not an independent certification of the repository's current state. Before changing it, re-inspect the branch, commit, and current code.
 
-| Área observada | Destino conceptual | Estrategia prudente |
+### 9.2 Gradual transition, not a massive rewrite
+
+| Observed area | Conceptual target | Prudent strategy |
 |---|---|---|
-| API/controllers | `GestionPermisos.Api/Features/...` | Mantenerlos como adaptadores HTTP; extraer lógica de negocio al migrar cada flujo |
-| `Core` | `Domain` + contratos/DTOs de `Application` | Clasificar cada archivo por responsabilidad; no mover todo `Core` al Domain |
-| `Services` | `Application/Features/...` para casos de uso; `Infrastructure` para integraciones | Separar caso por caso según dependencias reales |
-| `Data` | `Infrastructure/Persistence` | Mantener EF Core y `DbContext` fuera de Domain/Application |
-| `Crosscutting` | API, Application o Infrastructure según la función | No mover todo como bloque: auth HTTP, logging, hashing y configuración tienen dueños distintos |
-| Tests | Domain/Application/Infrastructure/API tests | Agregar pruebas de regresión antes y durante cada migración |
-| Vue `features` | `src/features/permissions`, `users`, `cutoffs`, etc. | Conservar la organización por negocio y evitar importar modelos internos del backend |
+| API/controllers | `GestionPermisos.Api/Features/...` | Keep them as HTTP adapters; extract business logic as each flow is migrated |
+| `Core` | `Domain` + `Application` contracts/DTOs | Classify each file by responsibility; do not move all of `Core` into Domain |
+| `Services` | `Application/Features/...` for use cases; `Infrastructure` for integrations | Separate case by case according to actual dependencies |
+| `Data` | `Infrastructure/Persistence` | Keep EF Core and `DbContext` outside Domain/Application |
+| `Crosscutting` | API, Application, or Infrastructure depending on the function | Do not move everything as a block: HTTP auth, logging, hashing, and configuration have different owners |
+| Tests | Domain/Application/Infrastructure/API tests | Add regression tests before and during each migration |
+| Vue `features` | `src/features/permissions`, `users`, `cutoffs`, etc. | Preserve business organization and avoid importing internal backend models |
 
-**No hacer:** borrar `Services`, `Core` o `Crosscutting` en una sola operación; renombrar carpetas y declarar que se logró Onion; mover todas las clases de `Core` a Domain sin clasificación; introducir un repositorio genérico para cada tabla sin comprobar que aporta valor.
+**Do not:** delete `Services`, `Core`, or `Crosscutting` in one operation; rename folders and declare that Onion was achieved; move all `Core` classes to Domain without classification; introduce a generic repository for every table without checking that it adds value.
 
-### 9.3 Orden de migración sugerido
+### 9.3 Suggested migration order
 
-1. **Congelar línea base:** registrar commit, build, pruebas ejecutadas y limitaciones. No editar hasta entender el estado actual.
-2. **Inventariar dependencias:** construir grafo real de referencias entre proyectos y mapa de llamadas de una feature.
-3. **Elegir un flujo acotado:** por ejemplo, consultar o autorizar un permiso, según complejidad y riesgo.
-4. **Agregar pruebas de caracterización:** capturar comportamiento actual antes de extraer lógica.
-5. **Definir contrato de Application:** declarar solo los puertos necesarios para ese caso de uso.
-6. **Extraer caso de uso:** mover coordinación fuera del controller sin cambiar el comportamiento observable.
-7. **Separar dominio con cuidado:** llevar una regla al Domain solo si es una regla de negocio real, no un simple método utilitario.
-8. **Implementar adaptadores:** infraestructura implementa los contratos; API registra dependencias en el composition root.
-9. **Verificar:** build, pruebas unitarias, integración con el proveedor real cuando corresponda y pruebas API/autorización.
-10. **Repetir por feature:** migración incremental, con commits pequeños y rollback claro.
-11. **Automatizar límites:** impedir referencias prohibidas mediante tests de arquitectura, reglas de solución o análisis de dependencias.
-12. **Actualizar documentación:** registrar decisiones, excepciones y lo realmente verificado.
+1. **Freeze the baseline:** record the commit, build, tests executed, and limitations. Do not edit until you understand the current state.
+2. **Inventory dependencies:** build the actual reference graph between projects and a call map for one feature.
+3. **Choose a bounded flow:** for example, query or authorize a permission, according to complexity and risk.
+4. **Add characterization tests:** capture current behavior before extracting logic.
+5. **Define the Application contract:** declare only the ports needed for that use case.
+6. **Extract the use case:** move coordination out of the controller without changing observable behavior.
+7. **Separate the domain carefully:** move a rule to Domain only if it is a real business rule, not a simple utility method.
+8. **Implement adapters:** infrastructure implements the contracts; the API registers dependencies in the composition root.
+9. **Verify:** build, unit tests, integration with the real provider when applicable, and API/authorization tests.
+10. **Repeat per feature:** incremental migration, with small commits and a clear rollback.
+11. **Automate boundaries:** prevent forbidden references through architecture tests, solution rules, or dependency analysis.
+12. **Update documentation:** record decisions, exceptions, and what was actually verified.
 
-La prioridad y el orden de las features deben definirse después de revisar riesgo, dependencias, frecuencia de cambio y cobertura. No asumir que permisos es automáticamente el primer módulo correcto.
+Feature priority and order must be defined after reviewing risk, dependencies, change frequency, and coverage. Do not assume that permissions is automatically the first correct module.
 
-## 10. Pruebas y controles de calidad
+## 10. Testing and quality controls
 
-### Pirámide mínima por límite
+### Minimum test pyramid per boundary
 
-- **Domain tests:** invariantes, transiciones de estado y reglas sin infraestructura.
-- **Application tests:** casos de uso con dobles de los puertos; éxito, ausencia de recurso, conflicto, fallo de dependencia y autorización.
-- **Infrastructure integration tests:** EF Core y el motor de base de datos real o equivalente compatible; no confiar solo en `EF InMemory` para validar SQL, transacciones o restricciones.
-- **API tests:** rutas, serialización, códigos HTTP, autenticación, autorización y manejo de errores.
-- **Frontend tests:** estados de carga/error, permisos de UI y flujos principales; la seguridad sigue siendo responsabilidad del backend.
+- **Domain tests:** invariants, state transitions, and rules without infrastructure.
+- **Application tests:** use cases with port doubles; success, missing resource, conflict, dependency failure, and authorization.
+- **Infrastructure integration tests:** EF Core and the real or compatible database engine; do not rely only on `EF InMemory` to validate SQL, transactions, or constraints.
+- **API tests:** routes, serialization, HTTP status codes, authentication, authorization, and error handling.
+- **Frontend tests:** loading/error states, UI permissions, and main flows; security remains the backend's responsibility.
 
-### Checklist de dependencias
+### Dependency checklist
 
-- [ ] `Domain` no referencia API, Infrastructure ni EF Core.
-- [ ] `Application` no referencia API ni Infrastructure.
-- [ ] Infrastructure implementa interfaces internas.
-- [ ] No hay ciclos entre proyectos.
-- [ ] El composition root registra las implementaciones.
-- [ ] Los tests no dependen innecesariamente de servicios externos.
-- [ ] Se prueban autorización y acceso a recursos en el servidor.
-- [ ] Se registran comandos exactos ejecutados y resultados reales.
+- [ ] `Domain` does not reference API, Infrastructure, or EF Core.
+- [ ] `Application` does not reference API or Infrastructure.
+- [ ] Infrastructure implements internal interfaces.
+- [ ] There are no cycles between projects.
+- [ ] The composition root registers the implementations.
+- [ ] Tests do not unnecessarily depend on external services.
+- [ ] Authorization and resource access are tested on the server.
+- [ ] The exact commands executed and the actual results are recorded.
 
-### Estándares y guías relevantes
+### Relevant standards and guidelines
 
-Usar estos referentes como guías de diseño y calidad, no como una certificación automática:
+Use these references as design and quality guidelines, not as automatic certification:
 
-- **SOLID:** especialmente inversión de dependencias (DIP), responsabilidad única (SRP) y segregación de interfaces (ISP).
-- **Clean Code:** nombres claros, funciones con una responsabilidad, bajo acoplamiento y evitar abstracciones sin valor.
-- **Clean Architecture / Onion:** políticas internas independientes de mecanismos externos.
-- **Screaming Architecture:** el propósito del sistema debe ser evidente en la organización.
-- **OWASP ASVS y OWASP Top 10:** criterios de verificación de seguridad web; seleccionar requisitos acordes al riesgo.
-- **Microsoft .NET / ASP.NET Core guidance:** convenciones idiomáticas, DI, configuración, manejo de errores y seguridad.
-- **RFC 9110 / HTTP semantics:** semántica de métodos y códigos HTTP; documentar el contrato API.
-- **OpenAPI:** describir y comprobar el contrato HTTP cuando el proyecto exponga una API.
-- **Pruebas automatizadas y CI:** build y pruebas reproducibles; no considerar un estándar satisfecho solo por mencionarlo en el README.
+- **SOLID:** especially dependency inversion (DIP), single responsibility (SRP), and interface segregation (ISP).
+- **Clean Code:** clear names, single-responsibility functions, low coupling, and avoiding valueless abstractions.
+- **Clean Architecture / Onion:** internal policies independent of external mechanisms.
+- **Screaming Architecture:** the system's purpose should be evident in its organization.
+- **OWASP ASVS and OWASP Top 10:** web security verification criteria; select requirements according to risk.
+- **Microsoft .NET / ASP.NET Core guidance:** idiomatic conventions, DI, configuration, error handling, and security.
+- **RFC 9110 / HTTP semantics:** method and status code semantics; document the API contract.
+- **OpenAPI:** describe and verify the HTTP contract when the project exposes an API.
+- **Automated tests and CI:** reproducible builds and tests; do not consider a standard satisfied just because it is mentioned in the README.
 
-No atribuir un nivel de cumplimiento a un estándar sin hacer una evaluación específica y documentada.
+Do not assign a compliance level to a standard without a specific, documented assessment.
 
-## 11. Antipatrones que esta skill debe detectar
+## 11. Antipatterns this skill should detect
 
-1. **Screaming cosmético:** existe `Features/`, pero las reglas siguen dispersas en servicios globales y controllers.
-2. **Onion de nombre:** los proyectos se llaman Domain/Application/Infrastructure, pero Application referencia Infrastructure.
-3. **Controller gordo:** consulta DB, aplica políticas, escribe archivos y decide transiciones de negocio.
-4. **Dominio anémico impuesto o DDD forzado:** añadir entidades complejas, agregados y eventos donde el problema no los necesita; o dejar invariantes críticas repartidas por controllers.
-5. **Repositorios rituales:** una interfaz y una implementación por tabla sin necesidad, valor de prueba ni frontera útil.
-6. **Pasamanos:** servicios que solo delegan sin agregar una responsabilidad.
-7. **`Common` como cajón de sastre:** módulos no relacionados terminan acoplados.
-8. **Duplicación ceremonial:** crear Request, Command, DTO, Model, Entity y Response idénticos en todos los casos aunque no haya una frontera que lo justifique.
-9. **Simetría 1:1 obligatoria:** forzar la estructura del frontend a copiar exactamente la del backend.
-10. **Confundir autenticación con autorización:** el usuario inició sesión, pero no necesariamente tiene permiso para ejecutar esa operación.
-11. **Migración big-bang:** mover cientos de archivos a la vez sin pruebas de caracterización ni commits pequeños.
-12. **Certificación por estructura:** asegurar que una arquitectura es correcta solo por ver nombres de carpetas.
+1. **Cosmetic Screaming:** `Features/` exists, but the rules remain scattered across global services and controllers.
+2. **Onion in name only:** the projects are called Domain/Application/Infrastructure, but Application references Infrastructure.
+3. **Fat controller:** queries the database, applies policies, writes files, and decides business transitions.
+4. **Imposed anemic domain or forced DDD:** adding complex entities, aggregates, and events where the problem does not need them; or leaving critical invariants scattered across controllers.
+5. **Ritual repositories:** one interface and one implementation per table without need, test value, or a useful boundary.
+6. **Pass-through:** services that only delegate without adding a responsibility.
+7. **`Common` as a catch-all:** unrelated modules end up coupled.
+8. **Ceremonial duplication:** creating identical Request, Command, DTO, Model, Entity, and Response types in every case even when no boundary justifies it.
+9. **Mandatory 1:1 symmetry:** forcing the frontend structure to copy the backend exactly.
+10. **Confusing authentication with authorization:** the user signed in, but does not necessarily have permission to execute that operation.
+11. **Big-bang migration:** moving hundreds of files at once without characterization tests or small commits.
+12. **Certification by structure:** asserting that an architecture is correct only by looking at folder names.
 
-## 12. Protocolo de trabajo del agente
+## 12. Agent workflow protocol
 
-Al recibir una tarea:
+When receiving a task:
 
-1. **Aclarar el objetivo y el alcance** sin preguntar por datos que ya estén en el repositorio o en el contexto.
-2. **Inspeccionar evidencia**: solución/proyectos, árbol, referencias, rutas, dependencias, pruebas y convenciones existentes.
-3. **Clasificar afirmaciones** como observado, inferido o no verificado.
-4. **Localizar la capacidad y el caso de uso** afectados.
-5. **Proponer el cambio mínimo coherente** con Screaming + Onion/Clean; no refactorizar el sistema entero para una feature pequeña.
-6. **Diseñar nombres y ubicación** antes de generar archivos.
-7. **Implementar siguiendo el flujo** API → Application → Domain/ports; Infrastructure implementa los ports y el composition root conecta.
-8. **Añadir o actualizar pruebas** del comportamiento y de los límites.
-9. **Ejecutar las verificaciones disponibles** y reportar exactamente qué pasó, qué falló y qué no se pudo ejecutar.
-10. **Entregar resumen**: archivos/capacidades afectados, decisiones arquitectónicas, pruebas, riesgos, excepciones y siguiente paso.
+1. **Clarify the goal and scope** without asking for data already present in the repository or context.
+2. **Inspect evidence:** solution/projects, tree, references, paths, dependencies, tests, and existing conventions.
+3. **Classify claims** as observed, inferred, or unverified.
+4. **Locate the affected capability and use case.**
+5. **Propose the minimum coherent change** consistent with Screaming + Onion/Clean; do not refactor the entire system for a small feature.
+6. **Design names and location** before generating files.
+7. **Implement following the flow** API → Application → Domain/ports; Infrastructure implements the ports, and the composition root connects them.
+8. **Add or update tests** for behavior and boundaries.
+9. **Run the available checks** and report exactly what happened, what failed, and what could not be executed.
+10. **Deliver a summary:** affected files/capabilities, architectural decisions, tests, risks, exceptions, and the next step.
 
-Para una auditoría de solo lectura, respetar explícitamente ese límite: no editar, mover ni borrar archivos. Separar hallazgos de recomendaciones y recomendaciones de acciones ejecutadas.
+For a read-only audit, explicitly respect that boundary: do not edit, move, or delete files. Separate findings from recommendations and recommendations from actions executed.
 
-## 13. Plantilla breve de decisión arquitectónica
+## 13. Short architecture decision template
 
-Para cada excepción o decisión no obvia, documentar:
+For each exception or non-obvious decision, document:
 
 ```text
-Decisión:
-Contexto y problema:
-Opciones consideradas:
-Decisión tomada:
-Regla Screaming aplicada:
-Regla Onion/Clean aplicada:
-Impacto en dependencias:
-Pruebas que la respaldan:
-Riesgos / costes:
-Condición para revisar la decisión:
+Decision:
+Context and problem:
+Options considered:
+Decision made:
+Screaming rule applied:
+Onion/Clean rule applied:
+Dependency impact:
+Supporting tests:
+Risks / costs:
+Condition to review the decision:
 ```
 
 ## 14. Definition of Done
 
-Una feature se considera terminada desde esta skill cuando:
+A feature is considered done from this skill's perspective when:
 
-- [ ] Vive en la capacidad de negocio adecuada.
-- [ ] El controller/adaptador se limita al transporte y delegación.
-- [ ] El caso de uso tiene nombre de acción y una responsabilidad clara.
-- [ ] Las invariantes de negocio están protegidas en Domain/Application, según su naturaleza.
-- [ ] Las dependencias apuntan hacia el interior.
-- [ ] La infraestructura implementa los contratos necesarios.
-- [ ] La autorización se verifica en el servidor y sobre el recurso cuando corresponde.
-- [ ] DTOs y modelos tienen propósito y nombres claros.
-- [ ] Existen pruebas relevantes y se ejecutaron o se reportó por qué no.
-- [ ] La documentación describe el estado real, incluidas las limitaciones.
-- [ ] No se añadieron capas, interfaces ni abstracciones sin justificación.
+- [ ] It lives in the right business capability.
+- [ ] The controller/adapter is limited to transport and delegation.
+- [ ] The use case has an action name and a clear responsibility.
+- [ ] Business invariants are protected in Domain/Application, according to their nature.
+- [ ] Dependencies point inward.
+- [ ] Infrastructure implements the necessary contracts.
+- [ ] Authorization is verified on the server and on the resource where applicable.
+- [ ] DTOs and models have a clear purpose and clear names.
+- [ ] Relevant tests exist and were run, or the reason they were not run was reported.
+- [ ] Documentation describes the actual state, including limitations.
+- [ ] No layers, interfaces, or abstractions were added without justification.
 
-## 15. Regla final
+## 15. Final rule
 
-La meta no es “tener más capas” ni “tener menos carpetas”. La meta es **localidad de cambio + dependencias controladas + reglas de negocio protegidas + complejidad proporcional**.
+The goal is not "more layers" or "fewer folders." The goal is **change locality + controlled dependencies + protected business rules + proportional complexity**.
 
-Cuando haya tensión entre una estructura bonita y una frontera real, prioriza la frontera real. Cuando una abstracción no reduzca acoplamiento, no habilite pruebas ni exprese una política del negocio, no la agregues por ceremonia. Cuando una excepción sea necesaria, hazla visible, pequeña y verificable.
+When there is tension between a pretty structure and a real boundary, prioritize the real boundary. When an abstraction does not reduce coupling, enable testing, or express a business policy, do not add it for ceremony. When an exception is necessary, make it visible, small, and verifiable.
