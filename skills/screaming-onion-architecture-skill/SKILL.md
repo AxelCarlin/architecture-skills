@@ -14,9 +14,9 @@ The proposed integration has three core dimensions plus an optional fourth:
 1. **Screaming Architecture — organization:** the repository communicates business capabilities (`Permissions`, `Users`, `Cutoffs`) instead of communicating only technologies (`Controllers`, `Services`, `Repositories`).
 2. **Onion Architecture — dependency direction:** external code depends on contracts and internal rules; the domain does not know about ASP.NET Core, EF Core, SQL Server, Vue, or infrastructure details.
 3. **Clean Architecture — boundaries and policies:** separates entities/rules, use cases, adapters, and frameworks; keeps dependencies pointing toward internal policies.
-4. **Vertical Slice — optional unit of change:** within a capability, organize code by flow/use case when that improves cohesion (`AuthorizePermission`, `CancelPermission`). It is not a synonym for the other three architectures and does not require duplicating the entire structure in every slice.
+4. **Vertical Slice — conditional unit of change:** within a capability, organize code by flow/use case when that improves cohesion (`AuthorizePermission`, `CancelPermission`). It is not a synonym for the other three architectures and does not require duplicating the entire structure in every slice.
 
-**Synthesis rule:** organize by business first; within each capability, group by use case when useful; preserve the dependency boundaries of Onion/Clean.
+**Synthesis rule:** organize by business first; within each capability, group meaningful independent operations by use case and keep trivial operations proportionate; preserve the dependency boundaries of Onion/Clean.
 
 ## 2. When to use this skill
 
@@ -318,6 +318,38 @@ Separate the following in reports:
 - **Unverified:** missing evidence or execution.
 
 Do not claim that tests pass if they were not run. Do not claim that a system complies with Clean/Onion only because it has projects with those names.
+
+### R17 — Vertical slice decision policy (SHOULD)
+
+Within each business capability, prefer a dedicated use-case slice when an operation has its own authorization, validation, business branching, transaction, side effects, distinct output, or independent change cadence. A slice is an **operation boundary**, not a new assembly, database, or domain model. A trivial stable CRUD read may remain a small query function or handler without ceremony. Record the reason when a substantial flow is not sliced.
+
+### R18 — Slice cohesion and isolation (MUST when using slices)
+
+Keep operation-specific request/command, validation, orchestration, result, and tests close together. One slice must not import another slice's handler, private DTO, validator, or implementation to reuse behavior. Coordinate cross-operation workflows at an explicitly named application use case; extract truly shared policies to Domain or stable ports/services to Application. Reuse Domain entities and Infrastructure adapters rather than cloning them per slice.
+
+### R19 — Slice boundary ownership (MUST)
+
+HTTP contracts and status mapping belong to API; operation intent and orchestration to Application; invariants to Domain; external implementations to Infrastructure. A physical slice may span several projects while retaining one recognizable operation name. A folder named `Features` does not waive these boundaries. Never put ASP.NET, EF Core, SQL clients, or transport response types inside Domain/Application merely to collocate a slice.
+
+### R20 — Test decisions by behavior and risk (MUST)
+
+For each new or modified operation, identify inputs, successful output, domain invariants, invalid input, authorization/resource ownership, missing data, conflict/concurrency, dependency failure, and transaction effects **as applicable**. Test the smallest boundary that can prove each behavior. Do not mechanically create a test for every class or every input field. Add regression tests for fixed bugs, characterization tests before risky refactors, integration tests for real persistence behavior, and API tests for routing/security/serialization. Record intentionally omitted cases and reasons.
+
+### R21 — Automated architecture checks (SHOULD)
+
+Where tooling permits, enforce project reference directions, forbid Infrastructure/API namespaces in Domain/Application, detect reference cycles, and guard slice-to-slice implementation imports. Run build, unit tests, integration tests where available, and static architecture checks in CI. Do not present folder structure alone as evidence of isolation. Keep the checks independent of folder-name fashions.
+
+### R22 — Avoid premature extraction (MUST)
+
+Before introducing shared code, identify a stable common policy or contract and at least two genuine consumers, or document a strong domain reason for earlier extraction. Similar-looking operations are not necessarily the same policy. Prefer a little local duplication over coupling unrelated features through a generic abstraction. Revisit only when evidence justifies it.
+
+### R23 — Read/write design is proportional (MUST)
+
+Vertical Slices do **not** require CQRS, MediatR, event buses, one handler interface per operation, or one repository per slice. Commands and queries are naming options, not architectural obligations. A simple read may use a narrow application query port implemented in Infrastructure. Writes must protect invariants, authorization, and atomicity as applicable. Choose complexity by observed needs.
+
+### R24 — Cross-slice transactions and side effects (MUST when applicable)
+
+When one business action spans multiple aggregates, repositories, or integrations, make the coordinating use case and consistency boundary explicit. Distinguish atomic database work from external effects that cannot join the same transaction. Define idempotency, retries, outbox/compensation, and concurrency controls only when the workflow warrants them; test the relevant failure modes. Do not hide a distributed workflow inside a repository or another slice's handler.
 
 ## 7. Recommended naming for C# and TypeScript
 
@@ -683,8 +715,173 @@ A feature is considered done from this skill's perspective when:
 - [ ] Documentation describes the actual state, including limitations.
 - [ ] No layers, interfaces, or abstractions were added without justification.
 
-## 15. Final rule
+## 15. Vertical Slice decision framework
 
-The goal is not "more layers" or "fewer folders." The goal is **change locality + controlled dependencies + protected business rules + proportional complexity**.
+This section operationalizes R17–R24 without changing the architectural center of gravity: **business capabilities first, dependency rules always, slices when they reduce change cost**.
+
+### 15.1 Choose the smallest coherent unit
+
+| Question | If yes | If no |
+|---|---|---|
+| Is this a distinct business action or independently evolving query? | Identify an operation and owner capability | Extend the existing operation without inventing a new feature |
+| Does it contain distinct authorization, validation, branching, state change, transaction, or side effects? | Prefer an Application slice | Consider a small function/query or existing use case |
+| Does it need persistence, time, email, files, or other external detail? | Define a narrow inward-facing port when needed | Keep it pure; do not add interfaces ceremonially |
+| Does it reuse a stable domain invariant? | Call the shared Domain behavior | Keep operation-specific decisions local |
+| Is the same policy truly shared by multiple use cases? | Extract to the correct inner boundary | Avoid speculative `Shared`/`Common` abstractions |
+
+**Decision output for an agent:** `Capability`, `Operation`, `Slice?`, `Reason`, `Layers touched`, `Ports`, `Business invariants`, `Security checks`, `Tests`, `Exceptions`. Do not require a separate decision document for every trivial edit; include the decisions in the change summary.
+
+### 15.2 Examples of proportional slicing
+
+- `Permissions/Authorize`: distinct authorization, transition rule, persistence → **slice recommended**.
+- `Permissions/Cancel`: separate business transition and possible conflict → **slice recommended**.
+- `Permissions/GetById`: a simple read with resource authorization → **lightweight query slice or narrow query service**, without needless command/handler/validator duplication.
+- `Permissions/List`: paging/filtering and access scope → **query-oriented use case**; SQL translation stays in Infrastructure.
+- `Users/FormatDisplayName`: trivial presentation transformation → **not a business slice**.
+- `Permissions/AuthorizeAndNotify`: coordinate database commit and external notification explicitly; consider reliable delivery when needed, not a hidden call to another handler.
+
+### 15.3 Where files belong (not all are mandatory)
+
+```text
+GestionPermisos.Api/
+  Features/Permissions/
+    PermissionsController.cs            # HTTP adapter; may expose multiple operations
+    Http/AuthorizePermissionRequest.cs  # Transport input only if distinct
+GestionPermisos.Application/
+  Features/Permissions/
+    Authorize/
+      AuthorizePermissionCommand.cs      # Optional when input needs its own type
+      AuthorizePermissionHandler.cs      # Use-case coordination
+      AuthorizePermissionValidator.cs    # Optional operation-specific validation
+      AuthorizePermissionResult.cs       # Optional distinct result
+    GetById/
+      GetPermissionByIdQuery.cs          # Lightweight read operation
+      GetPermissionByIdHandler.cs
+  Abstractions/Persistence/
+    IPermissionRepository.cs             # Shared port only if it is the right boundary
+GestionPermisos.Domain/
+  Permissions/Permission.cs              # Shared invariant, not duplicated per slice
+GestionPermisos.Infrastructure/
+  Persistence/Repositories/
+    EfPermissionRepository.cs            # Technical adapter, not a separate copy per slice
+```
+
+A controller can serve multiple slices while remaining thin. An operation can use Minimal APIs instead of controllers. A slice may have one file or several. Physical proximity is useful, but **compile-time dependency direction wins over colocation**.
+
+### 15.4 Cross-slice communication
+
+**Allowed:** use another slice's stable shared Domain entity/policy; consume a deliberately defined Application abstraction; coordinate two operations through a named parent workflow without invoking internal handlers as ad-hoc libraries.
+
+**Disallowed by default:** `AuthorizePermissionHandler` importing `CancelPermissionHandler`; sharing private slice DTOs as public contracts; making two slices write the same data with incompatible invariants; using `Shared` as an unowned integration hub.
+
+When a cross-capability dependency is necessary, define the owning capability, public contract, direction of dependency, consistency requirements, and tests. For a large system, assess module boundaries separately; slices alone do not create independent modules or microservices.
+
+## 16. Testing matrix and triggers
+
+### 16.1 Choose tests from observable behavior
+
+| Change / risk | Minimum useful evidence | Typical boundary |
+|---|---|---|
+| Domain invariant or state transition | Allowed and forbidden transitions, boundary values | Domain unit test |
+| Operation orchestration | Success, missing resource, conflict, external failure as relevant | Application test with fakes |
+| Resource-specific authorization | Allowed user, forbidden user, ownership/scope cases | Application and API integration |
+| Input parsing / HTTP contract | Invalid body, status codes, serialization, validation response | API integration |
+| EF Core query, SQL filter, migration, transaction | Query semantics, constraints, rollback, concurrency where relevant | Infrastructure integration with compatible/real DB |
+| External integration | Success, timeout, retry/idempotency where relevant | Contract/integration test |
+| Vue UI flow | Loading, empty, error, success, interaction | Component/e2e test according to risk |
+| Bug fix | Reproduces failure before fix and passes afterward | Closest relevant test boundary |
+| Refactor | Characterization test plus existing behavior preserved | Appropriate affected boundaries |
+| Architecture rule | Forbidden references/cycles and allowed composition | Automated architecture test |
+
+Tests are **not** counted by class count or file count. Prioritize risks and contracts. Do not claim all cases are covered without evidence.
+
+### 16.2 Per-operation test plan
+
+Before implementation, record succinctly:
+
+```text
+Capability / operation:
+Expected success behavior and output:
+Inputs and validation boundaries:
+Authorization and resource scope:
+Domain invariants / state transitions:
+Persistence / transaction / concurrency:
+External dependencies and failure behavior:
+Test cases by boundary (unit / integration / API / frontend):
+Not applicable or deferred (with reason):
+```
+
+Use a single test file when sufficient; split by behavior when it improves navigation. For example, `AuthorizePermissionHandlerTests` may cover success, conflict, missing permission, and forbidden actor without four separate classes. Prefer naming tests `Method_Scenario_ExpectedBehavior` or the repository's established convention.
+
+### 16.3 Testability and CI gates
+
+At minimum, run available formatting/lint, build, unit tests, architecture checks, and targeted integration tests. CI should reject newly forbidden dependencies and failing tests. For database tests, EF InMemory is **not** proof of SQL Server or PostgreSQL behavior. Where integration environments are unavailable, explicitly report what remains unverified and how to reproduce the check.
+
+## 17. Agent implementation protocol: operation by operation
+
+1. **Inspect first:** branch/commit, architecture, affected feature, existing conventions, contracts, tests, and runtime constraints.
+2. **Name the business action:** decide its capability owner and whether it is a distinct operation.
+3. **Apply the decision framework:** choose slice or lightweight implementation; explain the choice briefly.
+4. **Map responsibilities:** HTTP adapter, Application coordination, Domain invariant, Infrastructure adapter; list forbidden dependencies.
+5. **Design contract and security:** input/output, validation, authentication, resource authorization, failures, and transaction boundary.
+6. **Plan tests by risk:** identify tests that prove behavior; add regression/characterization tests when needed.
+7. **Implement a coherent vertical change:** transport → use case → domain/ports → adapter; keep the smallest useful diff.
+8. **Check coupling:** no slice-to-slice implementation imports, no new pass-through services, no accidental generic repository, no misplaced framework types.
+9. **Execute verification:** build, relevant tests, integration/architecture checks when possible; report commands and actual results.
+10. **Report:** files changed, business capability, decision to slice or not, architecture impact, security/transaction implications, tests executed, unverified areas, and remaining risks.
+
+For audits, execute steps 1–5 and report findings without edits. For migrations, preserve observable behavior, migrate one bounded operation at a time, and avoid big-bang rewrites.
+
+## 18. Anti-pattern examples and remedies
+
+| Anti-pattern | Why it is harmful | Better approach |
+|---|---|---|
+| One `PermissionService` with dozens of unrelated operations | Large change surface and hard-to-isolate tests | Separate independently evolving business operations |
+| A directory for every getter with five empty abstractions | Ceremony exceeds value | Lightweight query with clear boundary |
+| Handler calling another handler to reuse a rule | Cross-slice implementation coupling | Extract invariant to Domain or stable policy/port to Application |
+| Repository copied into each slice | Duplicates persistence behavior and configuration | Reuse narrow, appropriately owned ports/adapters |
+| Every DTO duplicated across API/Application/Domain | Maintenance and mapping overhead | Separate only when boundaries or semantics differ |
+| Business rules in controllers or EF configurations | Framework coupling and bypassable invariants | Put invariants in Domain, orchestration in Application |
+| `Shared` contains unrelated domain services | Hidden coupling between capabilities | Keep ownership explicit and extract only stable shared semantics |
+| All tests mock the database | SQL/transaction behavior remains unverified | Add real-provider integration tests for data behavior |
+| Declaring vertical slices solely because folders exist | No proof of cohesion or independence | Verify dependency and change boundaries |
+
+## 19. Extended Definition of Done and assessment rubric
+
+A sliced operation is complete only if the existing §14 checklist holds **and**:
+
+- [ ] The slice decision is justified by the operation's behavior and complexity.
+- [ ] Its capability owner and operation name are clear.
+- [ ] Its own validation, orchestration, and results are discoverable without hunting through unrelated features.
+- [ ] It does not import another slice's private implementation or contract.
+- [ ] Shared rules have an explicit owner and are not duplicated merely for slice isolation.
+- [ ] HTTP, Application, Domain, and Infrastructure responsibilities remain correctly placed.
+- [ ] Authorization and resource access are enforced at the appropriate server boundaries.
+- [ ] Transactions, concurrency, and external side effects are treated according to actual risk.
+- [ ] Tests are selected by behavior and risk, including negative paths where applicable.
+- [ ] Build/tests/architecture checks were executed or their absence is clearly reported.
+
+### Qualitative evaluation (not automatic certification)
+
+Score each criterion 0–2: `0` absent/violated, `1` partially demonstrated, `2` supported by direct evidence.
+
+| Criterion | Evidence to inspect |
+|---|---|
+| Business-first organization | Capabilities and use cases visible in source tree |
+| Inward dependencies | Project references and namespace/architecture checks |
+| Domain protection | Invariants testable without framework/DB |
+| Use-case cohesion | Operation-specific logic discoverable and localized |
+| Slice isolation | No direct handler-to-handler implementation dependencies |
+| Proportional abstraction | No ritual layers, interfaces, or duplicated DTOs |
+| Authorization/integrity | Resource scope, transaction and failure tests |
+| Testing quality | Behavior/risk matrix covered with appropriate boundaries |
+| Delivery discipline | Build, tests, reproducibility, truthful reporting |
+| Migration maintainability | Incremental changes, preserved behavior, documented exceptions |
+
+Total: **0–20**. Do not infer a perfect score from a written skill alone: inspect an actual implementation and test results before scoring architectural compliance.
+
+## 20. Final rule
+
+The goal is not "more layers", "more slices", or "fewer folders." The goal is **change locality + controlled dependencies + protected business rules + proportional complexity**.
 
 When there is tension between a pretty structure and a real boundary, prioritize the real boundary. When an abstraction does not reduce coupling, enable testing, or express a business policy, do not add it for ceremony. When an exception is necessary, make it visible, small, and verifiable.
